@@ -53,9 +53,35 @@ class PVNode {
     ensures r.list[0].0 <= max(old(this.list[0].0), pri)
     ensures multiset(r.list) == multiset(old(this.list)) + multiset{ (pri, v)}
     ensures fresh(r.footprint - old(this.footprint))
-    modifies footprint
+    modifies footprint, this, this.next
     decreases footprint
-  { 
+  {
+    if(pri > this.pri){
+      var aux := new PVNode(pri, v);
+      aux.next := this;
+      aux.footprint := aux.footprint + this.footprint;
+      aux.list := aux.list + this.list;
+      r := aux;
+      return;
+    } else if (pri < this.pri){
+      if(this.next == null){
+        var aux := new PVNode(pri, v);
+        //aux.next := this;
+        this.next := aux;
+        this.footprint := this.footprint + this.next.footprint;
+        this.list := this.list + this.next.list;
+        r := this;
+        return;
+
+      } else {
+        this.next := this.next.insertPVPair(pri, v);
+
+      }
+    } else {
+      r := this;
+      
+      return;
+    }
   }
 
 
