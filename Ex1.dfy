@@ -23,10 +23,25 @@ class PVNode {
     reads this, footprint
     decreases footprint;
   {
+    (this in footprint) &&
+    pri >= 0 &&
+    next == null ==> footprint == {this} && list == [(pri, data)] &&
+    next != null ==>  (next in footprint && footprint == next.footprint + {this}
+        && this !in next.footprint && list == [(pri, data)] + next.list
+        && pri > next.pri && next.Valid())
   }
 
   constructor (i : int, p : int) 
+  requires i >= 0
+  ensures Valid() &&
+  next == null && data == p && pri == i && list == [(i, p)] && footprint == {this}
   {
+    next := null;
+    data := p;
+    pri := i;
+    list := [(pri, data)];
+    footprint := {this};
+
   }
 
  
