@@ -23,18 +23,20 @@ class PVNode {
     reads this, footprint
     decreases footprint;
   {
+    this.pri >= 0 &&
+    |this.list| > 0 && |this.footprint| > 0 &&
     (this in footprint) &&
-    pri >= 0 &&
     next == null ==> footprint == {this} && list == [(pri, data)] &&
     next != null ==>  (next in footprint && footprint == next.footprint + {this}
         && this !in next.footprint && list == [(pri, data)] + next.list
-        && pri > next.pri && next.Valid())
+        && pri >= next.pri && next.Valid())
   }
 
   constructor (i : int, p : int) 
-  requires i >= 0
-  ensures Valid() &&
-  next == null && data == p && pri == i && list == [(i, p)] && footprint == {this}
+    requires i >= 0
+    ensures Valid() &&
+    next == null && data == p && pri == i && list == [(i, p)] && footprint == {this}
+    && (|this.list| > 0) && (|this.footprint| > 0)
   {
     next := null;
     data := p;
@@ -56,11 +58,12 @@ class PVNode {
     modifies footprint, this
     decreases footprint
   {
-    if(pri > this.pri){
+    
+    if(pri >= this.pri){
       var aux := new PVNode(pri, v);
       aux.next := this;
-      aux.footprint := aux.footprint + this.footprint;
       aux.list := aux.list + this.list;
+      aux.footprint := aux.footprint + this.footprint;
       r := aux;
       return;
     } else if (pri < this.pri){
@@ -73,24 +76,54 @@ class PVNode {
         return;
 
       } else {
-        //this.next != null
+        assert this.next != null;
         var aux := this.next.insertPVPair(pri, v);
+        this.footprint := {this} + aux.footprint;
+        this.list := [(this.pri, this.data)] + aux.list;
         this.next := aux;
-        this.footprint := {this} + next.footprint;
-        this.list := [(this.pri, this.data)] + next.list;
+        r := this;
         return;
 
       }
-    } else {
-      r := this;
-
-      return;
     }
+     
   }
 
 
   method removeNode(n : PVNode) returns (r: PVNode?) 
+  requires Valid()
+  ensures r != null ==> r.Valid()
+  decreases this.footprint
+  modifies footprint
   {   
+    if(this.next == null){
+      if(this == n){
+        r := null;
+        return;
+      } else {
+        r := this;
+        return;
+      }
+    } else {
+      if(this == n){
+        r := this.next;
+        return;
+      } else {
+        var aux := this.next.removeNode(n);
+        if (aux != null){
+          this.next := aux;
+          this.list := [(this.pri, this.data)] + aux.list;
+          this.footprint := {this} + aux.footprint;
+          
+        } else {
+          this.next := null;
+          this.list := [(this.pri, this.data)];
+          this.footprint := {this};
+        }
+        r := this;
+        return;
+      }
+    }
   }
 
 }
