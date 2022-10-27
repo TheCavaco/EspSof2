@@ -109,20 +109,22 @@ Node dequeue (Queue q) {
 }
 
 int validQueue(Queue q){
-	
-
 	if(q->fst == NULL && q->last == NULL && q->count == 0 && q->priHead == -1 && q->priLast == -1){
 		return 1;
 	} else if(q->fst != NULL && q->last != NULL && q->count > 0 && validPVList(q->fst)){
 		Node aux = q->fst;
+		int aux_count = 1;
 		while (aux != NULL){
 			if(aux->next == NULL){
 				// check if last is correct
-				return (q->last->pri == aux->pri && q->last->data == aux->data && q->last->next == NULL);
+				return (q->last->pri == aux->pri && q->last->data == aux->data && q->last->next == NULL && aux_count == q->count);
 			}
+			aux_count++;
 			aux = aux->next;
 		}
 		// never happens
+		return 0;
+	} else {
 		return 0;
 	}
 
