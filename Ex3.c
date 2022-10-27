@@ -44,6 +44,15 @@ Node removeNode(Node n1, Node n2) {
 	}
 }
 
+int validPVList(Node n) {
+	if(n->next != NULL){
+		return (n->pri >= 0) ? 1: 0;
+	} else {
+		if(n->pri < n->next->pri || n->pri < 0) return 0;
+		else return validPVList(n->next);
+	}
+}
+
 
 Queue makeQueue() {
 	Queue q = (Queue)malloc(sizeof(struct QueueS));
@@ -97,4 +106,24 @@ Node dequeue (Queue q) {
 		}
 		return ret; 
 	}
+}
+
+int validQueue(Queue q){
+	
+
+	if(q->fst == NULL && q->last == NULL && q->count == 0 && q->priHead == -1 && q->priLast == -1){
+		return 1;
+	} else if(q->fst != NULL && q->last != NULL && q->count > 0 && validPVList(q->fst)){
+		Node aux = q->fst;
+		while (aux != NULL){
+			if(aux->next == NULL){
+				// check if last is correct
+				return (q->last->pri == aux->pri && q->last->data == aux->data && q->last->next == NULL);
+			}
+			aux = aux->next;
+		}
+		// never happens
+		return 0;
+	}
+
 }

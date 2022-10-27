@@ -13,7 +13,7 @@ typedef struct NodeS {
 Node makeNode(int pri, int v);
 Node insertPVPair(Node n1, Node n2);
 Node removeNode(Node n1, Node n2);
-//int validPVList(Node n);
+int validPVList(Node n);
 
 typedef struct QueueS {
 	Node fst; 
