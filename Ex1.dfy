@@ -98,7 +98,7 @@ class PVNode {
   //ensures r != null ==> |r.list| == old(|this.list|) - 1
   ensures r != null ==> r.footprint <= old(this.footprint)
   ensures r == null ==> old(this.list[0].0) == n.pri
-
+  ensures r != null ==> old(this.pri) >= r.pri
   decreases this.footprint
   modifies footprint
   {   
@@ -115,18 +115,21 @@ class PVNode {
         r := this.next;
         return;
       } else {
-        assert this.next.Valid();
+        assert this.Valid();
 
         ghost var old_list := this.list;
         ghost var old_next_list := this.next.list;
         assert this.list == [(this.pri, this.data)] + this.next.list;
         assert |old_list| == |old_next_list| + 1;
         assert |old_list| > 1;
+        assert this.pri >= this.next.pri;
         var aux := this.next.removeNode(n);
         if (aux != null){
-          assert aux.Valid();
           assert this.pri >= aux.pri;
+
+          assert aux.Valid();
           this.next := aux;
+          allIsSorted(aux.list, ((this.pri, this.data)));
           this.list := [(this.pri, this.data)] + aux.list;
           this.footprint := {this} + aux.footprint;
           r := this; return; 
