@@ -23,13 +23,12 @@ class PVNode {
     reads this, footprint
     decreases footprint;
   {
-    this.pri >= 0 &&
-    |this.list| > 0 && |this.footprint| > 0 &&
+    (sortedPVSeq(this.list)) &&
     (this in footprint) &&
-    next == null ==> footprint == {this} && list == [(pri, data)] &&
-    next != null ==>  (next in footprint && footprint == next.footprint + {this}
+    (this.next == null ==> footprint == {this} && list == [(pri, data)]) &&
+    (this.next != null ==>  (next in footprint && footprint == next.footprint + {this}
         && this !in next.footprint && list == [(pri, data)] + next.list
-        && pri >= next.pri && next.Valid())
+        && pri >= next.pri && next.Valid()))
   }
 
   constructor (i : int, p : int) 
@@ -49,7 +48,7 @@ class PVNode {
  
 
   method insertPVPair (pri: int, v: int) returns (r : PVNode) 
-    requires Valid()
+    requires this.Valid()
     requires pri >= 0
     ensures r.Valid() 
     ensures r.list[0].0 <= max(old(this.list[0].0), pri)
@@ -65,6 +64,10 @@ class PVNode {
       aux.list := aux.list + this.list;
       aux.footprint := aux.footprint + this.footprint;
       r := aux;
+      assert r.pri >= this.pri;
+      assert sortedPVSeq(this.list);
+      assert r.list == [(r.pri, r.data)] + this.list;
+      allIsSorted(this.list, (r.pri, data));
       return;
     } else if (pri < this.pri){
       if(this.next == null){
@@ -76,7 +79,6 @@ class PVNode {
         return;
 
       } else {
-        assert this.next != null;
         var aux := this.next.insertPVPair(pri, v);
         this.footprint := {this} + aux.footprint;
         this.list := [(this.pri, this.data)] + aux.list;
@@ -93,6 +95,10 @@ class PVNode {
   method removeNode(n : PVNode) returns (r: PVNode?) 
   requires Valid()
   ensures r != null ==> r.Valid()
+  //ensures r != null ==> |r.list| == old(|this.list|) - 1
+  ensures r != null ==> r.footprint <= old(this.footprint)
+  ensures r == null ==> old(this.list[0].0) == n.pri
+
   decreases this.footprint
   modifies footprint
   {   
@@ -109,24 +115,46 @@ class PVNode {
         r := this.next;
         return;
       } else {
+        assert this.next.Valid();
+
+        ghost var old_list := this.list;
+        ghost var old_next_list := this.next.list;
+        assert this.list == [(this.pri, this.data)] + this.next.list;
+        assert |old_list| == |old_next_list| + 1;
+        assert |old_list| > 1;
         var aux := this.next.removeNode(n);
         if (aux != null){
+          assert aux.Valid();
+          assert this.pri >= aux.pri;
           this.next := aux;
           this.list := [(this.pri, this.data)] + aux.list;
           this.footprint := {this} + aux.footprint;
-          
+          r := this; return; 
         } else {
           this.next := null;
           this.list := [(this.pri, this.data)];
           this.footprint := {this};
+          r := this; return; 
         }
-        r := this;
-        return;
       }
     }
   }
 
+  lemma allIsSorted(s: seq<(int, int)> , r : (int,int))
+    requires sortedPVSeq(s) 
+    requires |s| > 0
+    requires r.0 >= s[0].0
+    ensures sortedPVSeq([r] + s)
+  {
+
+  }
+
+  
+
+
 }
+
+
 
 
 
