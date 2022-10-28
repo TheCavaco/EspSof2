@@ -5,7 +5,7 @@
 
 /*
   Property: If we create 3 nodes and add all of them together in a queue we should get a count == 3.
-  
+  Count property being tested
 */
 
 
@@ -26,13 +26,13 @@ int main() {
   klee_assume(pri_a >= 0);
   klee_assume(pri_b >= 0);
   klee_assume(pri_c >= 0);
+
+
   Queue queue = makeQueue();
 
   enqueue(queue, pri_a, data_a);
   enqueue(queue, pri_b, data_b);
   enqueue(queue, pri_c, data_c);
-
-  
 
   assert(queue->count == 3);
 
