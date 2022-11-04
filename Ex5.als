@@ -25,6 +25,7 @@ fact lastBelongsToQueue{
 	always (all q:Queue | one q.fst implies (one q.last and q.last in q.fst.*next ))
 }
 
+// Element of the queue with no next is last
 fact lastIsAlwaysLast {
 	always (all q:Queue , n:Node | no n.next and n in (q.fst + q.fst.*next) implies n = q.last)
 }
@@ -78,9 +79,9 @@ pred insertPVPair[n1:Node, n2:Node] {
 
 	//frame
 	all n:Node| (n != n1 and (n !in (n2 +n2.*next))) implies (n.next' = n.next)
-	all n:Node| ((n in (n2 +n2.*next) and one n.next and n.pri > n1.pri and n.next.pri > n1.pri)) implies (n.next' = n.next)
-	all n:Node| ((n in (n2 +n2.*next) and one n.next and n.pri < n1.pri and n.next.pri < n1.pri)) implies (n.next' = n.next)
-	all n:Node| ((n in (n2 +n2.*next) and no n.next and n.pri < n1.pri)) implies (n.next' = n.next)
+	all n:Node| ((n in (n2 +n2.*next) and one n.next and n.pri >= n1.pri and n.next.pri >= n1.pri)) implies (n' = n and n.next' = n.next)
+	all n:Node| ((n in (n2 +n2.*next) and one n.next and n.pri < n1.pri and n.next.pri < n1.pri)) implies (n' = n and n.next' = n.next)
+	all n:Node| ((n in (n2 +n2.*next) and no n.next and n.pri < n1.pri)) implies (n' = n and n.next' = n.next)
 	all q:Queue | (n2 !in (q.fst + q.fst.*next)) implies (q.fst' = q.fst and q.last' = q.last and q.count' = q.count)
 }
 
@@ -91,8 +92,15 @@ pred enqueue[q:Queue, n:Node]{
 
 	// post
 	once insertPVPair[n, q.fst]
+	//n' in (q.fst' + q.fst.*next')
+	//q.last.pri >= n.pri implies (no n.next') and q.last' = n'
+	//q.fst.pri < n.pri implies n.next' = q.fst and q.fst' = n' 
+	//one n1:Node | (n1 in (q.fst + q.fst.*next) and n1.pri >= n.pri and n1.next.pri < n.pri) implies n1.next' = n' and n.next' = n1.next
 
 	//frame
+	//q.count' = q.count + 1
+	all n1:Node | (n1 in (q.fst + q.fst.*next) and n1.pri >= n.pri and n1.next.pri < n.pri) implies n1.next' = n' and n.next' = n1.next 
+	q.last.pri >= n.pri implies (no n.next') and q.last' = n' and q.last.(~next)' = q.last.(~next)
 }
 
 
@@ -105,13 +113,13 @@ pred stutter {
 
 fact SystemFact {
 	// possible events
-	always ((some n1:Node, n2:Node | insertPVPair[n1,n2]) or stutter)
+	always ((some n1:Node, q1:Queue | enqueue[q1, n1]) or stutter)
 }
 
 pred RunPred1 {
 	(eventually always ((some Node.next) and (some fst) and (some last) and (some count)))
 	and 
-	(eventually once (some n1, n2: Node | insertPVPair[n1, n2]))
+	(eventually once (some n1:Node, q1:Queue | enqueue[q1, n1]))
 }
 
 run {RunPred1} for 5 but 5 steps
