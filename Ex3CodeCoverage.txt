@@ -1,0 +1,135 @@
+/home/klee/klee_src/project/Ex3.c:
+    1|       |#include "Ex3.h"
+    2|       |#include<stdlib.h>
+    3|       |#include<stdio.h>
+    4|       |#include<assert.h>
+    5|       |
+    6|     54|Node makeNode(int pri, int v) {
+    7|     54|  Node n = (Node)malloc(sizeof(struct NodeS)); 
+    8|     54|  n->pri = pri; 
+    9|     54|  n->data = v; 
+   10|     54|  n->next = NULL;
+   11|     54|  return n; 
+   12|     54|}
+   13|       |
+   14|      6|Node insertPVPair(Node n1, Node n2) { 
+   15|      6|  if ((n1 == NULL) || (n1->pri < n2->pri)) {
+   16|      0|          n2->next = n1;
+   17|      0|          return n2; 
+   18|      6|  } else {
+   19|      6|          Node prev = n1; 
+   20|      6|          Node cur = n1->next; 
+   21|      6|
+   22|      6|          while (cur != NULL && cur->pri >= n2->pri) {
+   23|      0|                  prev = cur; 
+   24|      0|                  cur = cur->next; 
+   25|      0|          }
+   26|      6|
+   27|      6|          prev->next = n2; 
+   28|      6|          n2->next = cur; 
+   29|      6|          return n1; 
+   30|      6|  }
+   31|      6|}
+   32|       |
+   33|      0|Node removeNode(Node n1, Node n2) {
+   34|      0|  if (n1 == n2) {
+   35|      0|          return n1->next;
+   36|      0|  } else {
+   37|      0|          if (n1->next == NULL) {
+   38|      0|                  return n1; 
+   39|      0|          } else {
+   40|      0|                  Node aux = removeNode(n1->next, n2);
+   41|      0|                  n1->next = aux; 
+   42|      0|                  return n1; 
+   43|      0|          }
+   44|      0|  }
+   45|      0|}
+   46|       |
+   47|      6|int validPVList(Node n) {
+   48|      6|  if(n->next != NULL){
+   49|      6|          return (n->pri >= 0) ? 1: 0;
+                                          ^0
+   50|      6|  } else {
+   51|      0|          if(n->pri < n->next->pri || n->pri < 0) return 0;
+   52|      0|          else return validPVList(n->next);
+   53|      0|  }
+   54|      6|}
+   55|       |
+   56|       |
+   57|     18|Queue makeQueue() {
+   58|     18|  Queue q = (Queue)malloc(sizeof(struct QueueS));
+   59|     18|  q->fst = NULL;
+   60|     18|  q->last = NULL;
+   61|     18|  q->count = 0;
+   62|     18|  q->priHead = -1; 
+   63|     18|  q->priLast = -1; 
+   64|     18|  return q; 
+   65|     18|}
+   66|       |
+   67|     54|void enqueue (Queue q, int pri, int v) {
+   68|     54|  Node n = makeNode(pri, v);
+   69|     54|  if (q->count == 0) {
+   70|     18|          q->fst = n; 
+   71|     18|          q->last = n;
+   72|     18|          q->priHead = pri;
+   73|     18|          q->priLast = pri;
+   74|     18|          q->count++; 
+   75|     36|  } else if (q->priHead < pri) {
+   76|     15|          n->next = q->fst;
+   77|     15|          q->fst = n; 
+   78|     15|          q->count++; 
+   79|     15|          q->priHead = pri; 
+   80|     21|  } else if (q->priLast >= pri) {
+   81|     15|          q->last->next = n; 
+   82|     15|          q->last = n; 
+   83|     15|          q->count++; 
+   84|     15|          q->priLast = pri;  
+   85|     15|  } else {
+   86|      6|          insertPVPair(q->fst, n);
+   87|      6|          q->count++; 
+   88|      6|  }
+   89|     54|}
+   90|       |
+   91|      0|Node dequeue (Queue q) {
+   92|      0|  if (q->count == 0) {
+   93|      0|          return NULL;
+   94|      0|  } else {
+   95|      0|          Node ret = q->fst;
+   96|      0|          if (q->count == 1) {
+   97|      0|                  q->fst = NULL; 
+   98|      0|                  q->last = NULL;
+   99|      0|                  q->count = 0; 
+  100|      0|                  q->priHead = -1; 
+  101|      0|                  q->priLast = -1; 
+  102|      0|          } else {
+  103|      0|                  q->fst = q->fst->next; 
+  104|      0|                  q->count--; 
+  105|      0|                  q->priHead = q->fst->pri; 
+  106|      0|          }
+  107|      0|          return ret; 
+  108|      0|  }
+  109|      0|}
+  110|       |
+  111|      6|int validQueue(Queue q){
+  112|      6|  if(q->fst == NULL && q->last == NULL && q->count == 0 && q->priHead == -1 && q->priLast == -1){                                                                                           
+                                    ^0                 ^0               ^0                  ^0
+  113|      0|          return 1;
+  114|      6|  } else if(q->fst != NULL && q->last != NULL && q->count > 0 && validPVList(q->fst)){
+  115|      6|          Node aux = q->fst;
+  116|      6|          int aux_count = 1;
+  117|     18|          while (aux != NULL){
+  118|     18|                  if(aux->next == NULL){
+  119|      6|                          // check if last is correct
+  120|      6|                          return (q->last->pri == aux->pri && q->last->data == aux->data && q->last->next == NULL && aux_count == q->count);
+  121|      6|                  }
+  122|     12|                  aux_count++;
+  123|     12|                  aux = aux->next;
+  124|     12|          }
+  125|      6|          // never happens
+  126|      6|          return 0;
+                ^0
+  127|      0|  } else {
+  128|      0|          return 0;
+  129|      0|  }
+  130|      6|
+  131|      6|}
