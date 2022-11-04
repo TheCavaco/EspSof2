@@ -5,12 +5,11 @@ sig Node {
 }
 
 sig Queue {
-	fst: lone First,
-	last: lone Last	
+	fst: lone Node,
+	last: lone Node,
+	count: Int 
 }
 
-sig First in Node {}
-sig Last in Node {}
 
 // There can be no nodes that are not in a queue
 fact allNodesBelongToSomeQueue {
@@ -37,6 +36,11 @@ fact AllPrioritiesAreBiggerThanZero {
 	all n:Node | n.pri >= 0
 }
 
+// Count is the size of the list
+fact CountSize {
+	all q:Queue | q.count = #(q.fst + q.fst.^next)
+}
+
 // No list repeats nodes (A->B->A)
 fact NoRepeatLists {
 	all n : Node | n not in n.^next	
@@ -44,12 +48,12 @@ fact NoRepeatLists {
 
 // There can be no node whose next is a first node
 fact FirstNodesAreNotNext {
-	no next.First
+	all q:Queue, n:Node | n.next != q.fst
 }
 
 // Nodes that are last in a queue have no next node
 fact NoNextInLastNode {
-	no Last.next
+	all q:Queue| one n:Node | n = q.last and no n.next  
 }
 
 run {} for exactly 10 Node, exactly 2 Queue
